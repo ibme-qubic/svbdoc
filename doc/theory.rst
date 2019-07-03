@@ -15,7 +15,9 @@ Bayes' theorem is a general statement about how ones belief about the value dist
 of a random variable should be updated in the light of new data. In the context of
 model parameter inference it can be described as follows:
 
-:math:`p(\theta \mid y) = q(\theta) = \frac{p(y \mid \theta) \, p(\theta)}{p(y)}`
+.. math::
+
+    p(\theta \mid y) = q(\theta) = \frac{p(y \mid \theta) \, p(\theta)}{p(y)}
 
 Here :math:`\theta` is the set of parameters of the model which we wish to infer.
 
@@ -105,13 +107,24 @@ The first of these terms is the negative of the *reconstruction cost* and is a m
 how well the model prediction fits the data.
 
 The second term is the *latent cost* and measures the closeness of the posterior
-to the prior.
+to the prior. 
 
 This is more tractable than a numerical integration *provided* we can obtain
 a representative sample from the posterior. Maximisation of the free energy
 can then be done using a generic framework such as those developed for machine
 learning applications which have the ability to automatically calculate gradients
 of an objective function from a defined set of calculation steps.
+
+The latent cost term can be alternatively written as follows, removing the stochastic approximation
+for part of the log:
+
+.. math::
+
+    E_{q(\theta)} \bigg[ \log \Big( \frac{q(\theta)}{p(\theta)} \Big) \bigg] \approx E_{q(\theta)} \bigg[ \log(q(\theta)) \bigg] - \frac{1}{S} \sum_s \bigg[ \log ( p(\theta^s) ) \bigg]
+
+The first term is the *entropy* of the posterior distribution. For many distributions this 
+can be calculated analytically without reference to a sample, so we may be able reduce our
+dependence on the choice of sample to some degree.
 
 The problem of sampling from the posterior is of some significance. If the 
 optimization is to work effectively it would be helpful if the gradients
