@@ -294,3 +294,44 @@ applications often have extremely large numbers of training examples and often u
 mini-batch sizes of 20-50. In our case the number of time points in real data
 rarely exceeds 100 so it may be the case that mini-batch training is only 
 useful for larger data sets.
+
+Learning rate quenching
+~~~~~~~~~~~~~~~~~~~~~~~
+
+There is no requirement to keep the learning rate constant throughout the 
+optimization. It can, and often is, changed after each epoch or training 
+iteration. One simple strategy is to gradually reduce ('quench') the learning rate, starting
+off with a high value that quickly explores the parameter space, and reducing it 
+to home in on the minimum with high accuracy. Currently we have a very simple
+implementation of this idea using the following parameters:
+
+ - ``max_trials`` If this number of epochs passes without the cost function
+   improving over the previous best, the learning rate will be reduced
+ - ``quench_rate`` - a factor to reduce the learning rate by (e.g. 0.5 means the
+   learning rate will be halved)
+ - ``min_learning_rate`` - The learning rate will never be reduced 
+   lower than this value
+
+This scheme gives us some freedom to start with relatively high learning rates
+and reduce them if they are not getting us anywhere. We also adopt the same
+strategy where a numerical error is detected. Often this occurs when parameters
+stray out of 'reasonable' ranges, suggesting an excessively large optimization
+step. In this case we reset to the previous best cost state and reduce the
+learning rate by ``quench_rate`` and continue.
+
+It is worth noting that this is far from being the only strategy for modifying
+learning rates during training, not is it an agreed best practice! Other
+ideas include:
+
+ - Starting with a low learning rate and *increasing* it until the
+   cost stops decreasing, thus determining an optimal learning rate which 
+   is then selected.
+ - Cycling the learning rate to explore a varied region of parameter space
+   and aid escape from local minima (possibly combined with quenching over time)
+ - Increasing the batch size rather than the learning rate to reduce gradient
+   noise as convergence is approached.
+
+It remains to be seen if any of these strategies are useful in our application - 
+again they are typically the product of machine learning applications which, 
+although they resemble our problem in some ways, differ greatly in others so
+not all recommended strategies may be useful. 
