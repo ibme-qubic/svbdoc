@@ -243,5 +243,54 @@ parameters over.
 Optimization strategy
 ---------------------
 
+Optimization is performed using the ``AdamOptimizer``, a gradient based optimization
+algorithm that seeks to minimise the given cost function. The key parameter in configuring
+the optimizer is the *learning rate* which determines the size of the step in parameter
+space that the optimizer takes in order to reduce the cost function. High learning
+rates move further and may therefore reduce the cost function more quickly, however
+they may also 'overshoot' the actual minimum and fail to converge, or find a local minimum
+instead. Low learning rates by contrast move more cautiously towards the minimum however
+the resulting convergence may be too slow to be useful.
+
+Unfortunately there is no obvious way to select the optimal learning rate for a given
+problem. Typically in machine learning applications a process of trial and error is
+involved, with learning curves used as a way to assess the convergence. This is 
+not too problematic as the training is often a one-off or occasional step with the
+trained model then re-used for multiple applications. In our case, however, we need
+to train a model for each application (data set) we process and the ability to select
+a suitable learning rate is critical. For this reason we will need to devote some
+effort to identifying how to select this parameter for the kind of data we face.
+
+Optimization is divided into *Epochs*, each of which involves the entire data set being
+processed and the parameters and cost function updated. This can be done in a single
+iteration of the optimizer, passing all the data in, however it is also possible to use a 
+*mini-batch* method which can offer some advantages.
+
 Mini-batch training
 ~~~~~~~~~~~~~~~~~~~
+
+In mini-batch training, the data set is divided into chunks and an optimization step
+is performed for each chunk. When all chunks have been processed an epoch is complete
+and we start the next epoch with the first chunk again.
+
+There are two main potential advantages to mini-batch training:
+
+1. *Efficiency* - the information contained in the data set does not scale linearly
+   with the number of points included, whereas the computational effort often does. 
+   Processing half of the data may take half as much time and yet yield an optimization
+   iteration nearly as effective as processing the full data. An epoch is then
+   be comprised of two optimization iterations rather then one. which should mean
+   faster convergence by epochs.
+2. *Increasing noise* - One danger of gradient based optimization is local minima.
+   A way to reduce the likelihood of the optimization getting stuck in one is to
+   introduce an element of noise to the gradients so the optimization will explore
+   a wider range of parameter space during the minimization. Smaller batches of
+   data will give noisier gradients and may help alleviate this problem to some
+   extent.
+
+While this is persuasive it is important to recognize that assumptions about the
+efficiency of an optimization must be tested in practice. Typical machine learning
+applications often have extremely large numbers of training examples and often use
+mini-batch sizes of 20-50. In our case the number of time points in real data
+rarely exceeds 100 so it may be the case that mini-batch training is only 
+useful for larger data sets.
