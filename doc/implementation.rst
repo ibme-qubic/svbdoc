@@ -295,6 +295,14 @@ mini-batch sizes of 20-50. In our case the number of time points in real data
 rarely exceeds 100 so it may be the case that mini-batch training is only 
 useful for larger data sets.
 
+A mini-batch can be extracted from the data in two main ways, either by dividing
+up the data into sequential chunks or by taking strided subsamples through the 
+data. The latter seems more approprate when the data forms a continuous timeseries
+since we are always using information from across the time series, however for the 
+same reason the former method may be preferred when our data consists of repeated 
+blocks of measurements of the same timeseries (as is sometimes the case for ASL data).
+Our implementation supports both via the ``sequential_batches`` parameter.
+
 Learning rate quenching
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -335,3 +343,27 @@ It remains to be seen if any of these strategies are useful in our application -
 again they are typically the product of machine learning applications which, 
 although they resemble our problem in some ways, differ greatly in others so
 not all recommended strategies may be useful. 
+
+Voxelwise convergence
+~~~~~~~~~~~~~~~~~~~~~
+
+Our implementation seeks to minimise the mean cost over all voxels, however it
+is clear in practice that some voxels converge more rapidly than others. If
+we can identify 'converged' voxels and exclude them from the calculation in
+subsequent epochs we may attain overall convergence faster (or alternatively
+be able to use larger numbers of epochs to ensure we converge 'difficult' 
+voxels without penalising our runtime too much).
+
+Two ways we might accomplish this are:
+
+ - A voxelwise mask which selects out a subset of the data for cost 
+   calculation. This would need to be applied at an early stage in the
+   calculation graph in order to save computational time.
+ - 'Zeroing' the gradients of converged voxels so they do not contribute
+   to the minimisation.
+
+We have not attempted to implement these strategies yet because currently we
+want to understand convergence generally and are less concerned with absolute
+performance. However this would be useful to investigate as we start to 
+apply the method to real examples.
+
