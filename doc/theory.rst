@@ -45,7 +45,9 @@ Variational Bayes
 The general Bayesian inference problem can, in general, only be solved by a sampling
 method such as Markov Chain Monte Carlo (MCMC) where random samples are generated in
 such a way that, through Bayes' theorem, they gradually provide a representative 
-sample of the posterior distribution.
+sample of the posterior distribution. Any properties of the posterior, such as mean
+and variance, can be calculated from the sample once it is large enough to be
+representative.
 
 MCMC, however, is extremely computationally intensive especially for the kind of 
 applications we are concerned with where we may be fitting between 2 and 20 parameters
@@ -137,3 +139,15 @@ then scale the values using the (variable) mean and variance of the posterior
 distribution. This enables the gradients to be used in the optimization 
 algorithm. The disadvantage of the method is that it does not immediately
 generalise to other kinds of distributions.
+
+The main advantage of the stochastic approach is that the requirements on
+the prior and posterior distributions are greatly reduced. The prior
+distribution needs to be able to generate log probabilities for a set of
+parameters, the posterior needs to be able to generate samples and its
+own entropy, and we need some means of calculating the data likelihood
+- this normally involves a noise model which can calculate the
+probability of the observed deviations between a model prediction
+and the actual data. The actual forms of the distributions are not 
+constrained further (apart from the limitation of not always being able to use
+the reparameterization trick).
+
