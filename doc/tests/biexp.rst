@@ -4,14 +4,15 @@ Tests using Biexponential model
 The biexponential model outputs a sum of exponentials:
 
 .. math::
-    M(t) = A_1 \exp{-R_1 t} + A_2 \exp{-R_2 t}
+    M(t) = A_1 \exp{(-R_1 t)} + A_2 \exp{(-R_2 t)}
 
 The model parameters are the amplitudes :math:`A_1`, :math:`A_2`
 and the decay rates :math:`R_1` and :math:`R_2`.
 
 Although the model is straightforward it can be challenging as
 an inference problem as the effect of the two decay rates on the
-output is subtle and nonlinear.
+output is nonlinear and can be difficult to distinguish in the
+presence of noise.
 
 Test data
 ---------
@@ -124,23 +125,25 @@ rates. This is in line with expectations since high learning rates and
 low batch sizes both imply a 'noisier' optimization and both excessively
 high or low noise in the optimization can be problematic.
 
-The optimal batch size in this data was 10-15 which gives the
+Batch sizes smaller than the number of points in the data are only 
+beneficial for larger numbers of time points (50 or 100). For these
+data sets the optimal batch size was 10-15, which give the
 'flattest' curve, i.e. least affected by variation in the learning rate.
 Where batch size is fixed in subsequent tests we use a value of 10.
 
 Effect of prior and initial posterior
 -------------------------------------
 
-The following combinations of prior and posterior were used. An inforative
+The following combinations of prior and posterior were used. An informative
 prior was set with a mean equal to the true parameter value and a standard
 deviation of 2.0. Non-informative priors were set with a mean of 1 and a
 standard deviation of 1e6 for all parameters.
 
 Non-informative initial posteriors were set equal to the non-informative
 prior. Informative posteriors were set with a standard deviation of 2.0
-and a mean which either matched or did not match the true parameter value.
-In addition, an option in the model enabled the posterior amplitude 
-parameters to be initialised from the data.
+and a mean which either matched or did not match the true parameter value as
+described below. In addition, an option in the model enabled the initial 
+posterior mean for the amplitude parameters to be initialised from the data.
 
 +----------------+----------------------------------------------------------------------+
 |Code            |Description                                                           |
@@ -186,8 +189,8 @@ parameters to be initialised from the data.
 
 These results show that in terms of absolute convergence there is no significant 
 difference between the choice of prior and posterior. Note that the absolute cost
-achieved is different between the informative and non-informative priors as 
-expected. The exception is the cases where a non-informative initial posterior is
+achieved can be different between the informative and non-informative priors as 
+expected. The exception is the cases where a *non-informative* initial posterior is
 used - these cases do not achieve convergence.
 
 The explanation for this lies in the fact that components of the cost are dependent
@@ -195,27 +198,28 @@ on a sample drawn from the posterior. In the case of a non-informative posterior
 samples of realistic sizes cannot be large enough to be representative and different
 samples may contain widely varying contents. Such samples cannot reliably 
 direct the optimisation to minimise the cost function because the calculated cost 
-(and its gradients) are dominated by the random variation in the values contained within
+(and its gradients) are dominated by random variation in the values contained within
 the sample.
 
 By contrast if the posterior is informative - even if it is far from the best solution
 - different moderately-size random samples are all likely to provide a reasonable representation
-of the distribution. The optimisation will therefore be directed to minimse the cost
-more reliably since it is less dependent on the particular values in the sample.
+of that distribution. The optimisation will therefore be directed to minimse the cost
+more reliably since it is less dependent on the particular values that happened
+to be included in the sample.
 
 We conclude that the initial posterior must be informative even if it is a long way 
 from the true solution.
 
 The ``_analytic`` and ``_num`` plots are identical apart from using the analytic
 or the numerical solution to the KL divergence between two MVNs. The similarity between these results
-is evidence that the numerical solution should be sufficient
+suggests that the numerical solution should be sufficient
 in cases where the prior and posterior cannot be represented as two MVN distributions.
 
 The ``_corr`` and ``__nocorr`` plots were generated with and without a full posterior
 covariance matrix. In this case we see little difference between the two.
 
 It is reassuring that the cost can converge under a wide variety of prior and posterior
-assumptions, however it is useful to consider the effect of these variabels also
+assumptions, however it is also useful to consider the effect of these variables
 on speed of convergence. The results below illustrate this:
 
 .. image:: /images/prior_post_conv_speed.png
@@ -228,7 +232,8 @@ this plot.
 
 It is clear that the main impact on convergence speed is the initial posterior. 
 Where it is far from the true values (``i_wrong``) convergence is slowest. However
-this problem is much less obvious when the priors are informative as this has the
-effect of guiding the optimisation to the correct solution. Initialisation of the
+this problem is much less obvious when the priors are informative as in this case the
+'wrong' posterior values generate high latent cost as they are far from the 'true'
+prior values. This quickly guides the optimisation to the correct solution. Initialisation of the
 posterior from the data (where there is a reasonable method for doing this) is
 therefore recommended to improve convergence speed.
