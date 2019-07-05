@@ -110,3 +110,10 @@ the batch size to see if there is any actual advantage in this structure.
 
 .. image:: /images/best_cost_lr_asl_rpts.png
     :alt: Best cost achieved in 500 epochs by learning rate
+
+The patterns with convergence and batch size are very similar to those
+obtained from the biexponential model. In particular there is no visible
+effect of aligning the batch size with the ASL repeats. Again we find
+a general optimum learning rate of 0.1 - 0.05 associated with a batch 
+size around 10, although it is noticable that the best cost achieved
+at lower learning rates is a bit better with smaller batch sizes.

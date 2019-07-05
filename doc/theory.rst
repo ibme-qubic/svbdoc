@@ -109,7 +109,8 @@ The first of these terms is the negative of the *reconstruction cost* and is a m
 how well the model prediction fits the data.
 
 The second term is the *latent cost* and measures the closeness of the posterior
-to the prior. 
+to the prior. In fact it is the Kullback-Leibler (KL) divergence between the
+prior and posterior distributions.
 
 This is more tractable than a numerical integration *provided* we can obtain
 a representative sample from the posterior. Maximisation of the free energy
@@ -127,6 +128,18 @@ for part of the log:
 The first term is the *entropy* of the posterior distribution. For many distributions this 
 can be calculated analytically without reference to a sample, so we may be able reduce our
 dependence on the choice of sample to some degree.
+
+If both the prior and posterior are multivariate Gaussian distributions, we can 
+go further and obtain a fully analytic expression for the latent loss using the known
+result for the KL divergence of two MVNs:
+
+.. math::
+
+    E_{q(\theta)} \bigg[ \log \Big( \frac{q(\theta)}{p(\theta)} \Big) \bigg] = \frac{1}{2} \bigg\{ \mathrm{Tr}(\Sigma_p^{-1} \Sigma_q) + (\mu_p - \mu_q)^T\Sigma_p^{-1}(\mu_p - \mu_q) - N + \log\bigg( \frac{\det \Sigma_p}{\det \Sigma_q} \bigg)  \bigg\}
+
+Here :math:`N` is the number of parameters in :math:`\theta`, and 
+:math:`\mu_p, \Sigma_p, \mu_q, \Sigma_q` are the mean and covariance of the 
+prior and posterior.
 
 The problem of sampling from the posterior is of some significance. If the 
 optimization is to work effectively it would be helpful if the gradients
@@ -147,7 +160,8 @@ parameters, the posterior needs to be able to generate samples and its
 own entropy, and we need some means of calculating the data likelihood
 - this normally involves a noise model which can calculate the
 probability of the observed deviations between a model prediction
-and the actual data. The actual forms of the distributions are not 
-constrained further (apart from the limitation of not always being able to use
+and the actual data. Although we can take advantage of analytic results for
+Gaussian distribution, the actual forms of the distributions are not 
+constrained by the method (apart from the limitation of not always being able to use
 the reparameterization trick).
 

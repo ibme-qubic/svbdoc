@@ -47,6 +47,8 @@ The following variables were investigated
 
  - The learning rate
  - The batch size (NB this cannot exceed the number of time points)
+ - The size of the sample taken from the posterior when set independently
+   of the batch size
  - The prior distribution of the parameter
  - The initial posterior distribution of the parameters
  - The use of the numerical (sample-based) calculation of the KL
@@ -130,6 +132,50 @@ beneficial for larger numbers of time points (50 or 100). For these
 data sets the optimal batch size was 10-15, which give the
 'flattest' curve, i.e. least affected by variation in the learning rate.
 Where batch size is fixed in subsequent tests we use a value of 10.
+
+Effect of posterior sample size
+-------------------------------
+
+The sample size is used to esimate the integrals in the calculation of
+the cost function, so we would expect that a certain minimum size would
+be required for a good result. Here we vary the sample size independently
+of the batch size which is fixed at 10 - the learning rate is also fixed
+at 0.1 based on the results of the previous tests.
+
+.. image:: /images/conv_ss.png
+    :alt: Convergence of free energy by sample size
+
+The convergence of the free energy shows that convergence occurs in fewer
+epochs for large sampling sizes and that there is little benefit to
+samples sizes > 100. However this is not necessarily significant in terms
+of performance as each epoch takes more time when the sample size is larger.
+Note also that it is possible that a lower sample size may constrain the
+free energy systematically (analogously to the way in which numerical
+integration techniques may systematically under or over estimate depending
+on whether the function is convex). So the higher free energy of smaller
+sample sizes does not necessarily mean that the posterior is actually
+further from the best variational solution.
+
+With this in mind it is useful to look at convergence in parameter values:
+
+.. image:: /images/conv_ss_amp1.png
+    :alt: Convergence of amp1 parameter by sample size
+
+.. image:: /images/conv_ss_amp2.png
+    :alt: Convergence of amp2 parameter by sample size
+
+.. image:: /images/conv_ss_r1.png
+    :alt: Convergence of r1 parameter by sample size
+
+.. image:: /images/conv_ss_r2.png
+    :alt: Convergence of r2 parameter by sample size
+
+Here we can see that firstly, with fewer data points the optimization tends
+to favour a single-exponential solution and does not recover the biexponential
+property for many voxels until we have NT=50.
+
+With regard to sample size, there seems little benefit in sample sizes above
+30.
 
 Effect of prior and initial posterior
 -------------------------------------

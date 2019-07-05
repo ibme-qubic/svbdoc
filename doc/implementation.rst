@@ -303,6 +303,16 @@ same reason the former method may be preferred when our data consists of repeate
 blocks of measurements of the same timeseries (as is sometimes the case for ASL data).
 Our implementation supports both via the ``sequential_batches`` parameter.
 
+One factor that needs to be accounted for when doing mini-batch training is the
+scaling of different contributions to the total cost. The latent cost depends 
+only on the prior and posterior distributions and not on the size of the training
+data, however the reconstruction cost is a sum of log probabilities over the
+points in the training data. Correct Bayesian inference only occurs when this
+is scaled by :math:`\frac{N_t}{N_b}` where :math:`N_t` is the number of time
+points in the full data and :math:`N_b` is the number in the mini-batch, i.e.
+the batch is being used to estimate the reconstruction cost for the full
+data set.
+
 Learning rate quenching
 ~~~~~~~~~~~~~~~~~~~~~~~
 
