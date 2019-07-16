@@ -105,10 +105,10 @@ by the mean over the samples:
 
 Where we have :math:`S` samples of the full set of parameters, denoted :math:`\theta^s`.
 
-The first of these terms is the negative of the *reconstruction cost* and is a measure of
+The first of these terms is the negative of the *reconstruction loss* and is a measure of
 how well the model prediction fits the data.
 
-The second term is the *latent cost* and measures the closeness of the posterior
+The second term is the *latent loss* and measures the closeness of the posterior
 to the prior. In fact it is the Kullback-Leibler (KL) divergence between the
 prior and posterior distributions.
 
@@ -118,7 +118,10 @@ can then be done using a generic framework such as those developed for machine
 learning applications which have the ability to automatically calculate gradients
 of an objective function from a defined set of calculation steps.
 
-The latent cost term can be alternatively written as follows, removing the stochastic approximation
+Alternative forms of the latent loss
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The latent loss term can be alternatively written as follows, removing the stochastic approximation
 for part of the log:
 
 .. math::
@@ -141,6 +144,9 @@ Here :math:`N` is the number of parameters in :math:`\theta`, and
 :math:`\mu_p, \Sigma_p, \mu_q, \Sigma_q` are the mean and covariance of the 
 prior and posterior.
 
+Obtaining the sample from the posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The problem of sampling from the posterior is of some significance. If the 
 optimization is to work effectively it would be helpful if the gradients
 of the sample values with respect to the variable parameters could be 
@@ -152,6 +158,9 @@ then scale the values using the (variable) mean and variance of the posterior
 distribution. This enables the gradients to be used in the optimization 
 algorithm. The disadvantage of the method is that it does not immediately
 generalise to other kinds of distributions.
+
+Advantages of the stochastic approach
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The main advantage of the stochastic approach is that the requirements on
 the prior and posterior distributions are greatly reduced. The prior
