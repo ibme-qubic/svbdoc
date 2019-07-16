@@ -222,9 +222,9 @@ mean log likelihood tensor with dimensions ``[V]``.
 Cost function
 ~~~~~~~~~~~~~
 
-The cost function is defined by summing two tensors. The *Reconstruction cost* is the
+The total loss is defined by summing two loss tensors. The *Reconstruction loss* is the
 negative of the mean log likelihood returned by the noise model. This is essentially
-a measure of how well the model prediction fits the data. The *Latent cost* is the
+a measure of how well the model prediction fits the data. The *Latent loss* is the
 posterior distribution entropy minus the mean log PDF of the prior and penalises
 large deviations from the prior values of the parameters. Each of these is 
 defined by operations on the tensors returned by the prior, posterior and noise models
@@ -232,11 +232,11 @@ and has dimension ``[V]``.
 
 .. note::
     If both prior and posterior are multivariate Gaussian distributions an analytic
-    expression for the latent cost is available which does not require the use
+    expression for the latent loss is available which does not require the use
     of a sample. In this case we use this instead of the calculation described above,
     and an additional operation is defined in the MVN posterior for this.
 
-The final cost function is then defined as a mean over voxels of the cost tensor, i.e.
+The final cost function is then defined as a mean over voxels of the loss tensor, i.e.
 a scalar. This is to ensure that the optimizer has a single value to optimize the
 parameters over.
 
@@ -304,13 +304,13 @@ blocks of measurements of the same timeseries (as is sometimes the case for ASL 
 Our implementation supports both via the ``sequential_batches`` parameter.
 
 One factor that needs to be accounted for when doing mini-batch training is the
-scaling of different contributions to the total cost. The latent cost depends 
+scaling of different contributions to the total cost. The latent loss depends 
 only on the prior and posterior distributions and not on the size of the training
-data, however the reconstruction cost is a sum of log probabilities over the
+data, however the reconstruction loss is a sum of log probabilities over the
 points in the training data. Correct Bayesian inference only occurs when this
 is scaled by :math:`\frac{N_t}{N_b}` where :math:`N_t` is the number of time
 points in the full data and :math:`N_b` is the number in the mini-batch, i.e.
-the batch is being used to estimate the reconstruction cost for the full
+the batch is being used to estimate the reconstruction loss for the full
 data set.
 
 Learning rate quenching
