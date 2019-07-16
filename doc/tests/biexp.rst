@@ -35,10 +35,17 @@ The variables within the test data are:
 An example timeseries with these parameters is show below (100 time points,
 ground truth overlaid on noisy data):
 
-.. image:: /images/sample_timeseries.png
+.. image:: /images/biexp/sample_timeseries.png
     :alt: Sample timeseries
 
 1000 timeseries instances were generated and used for each test.
+
+One issue with the biexponential model is that there are always two 
+equivalent solutions obtained by exchanging :math:`A_1, R_1` with 
+:math:`A_2, R_2`. To prevent this from confusing reports of mean
+parameter values, we normalize the results of each run such that
+in each voxel :math:`A_1, R_1` is the exponential with the lower
+rate.
 
 Test variables
 --------------
@@ -46,9 +53,9 @@ Test variables
 The following variables were investigated
 
  - The learning rate
- - The batch size (NB this cannot exceed the number of time points)
  - The size of the sample taken from the posterior when set independently
    of the batch size
+ - The batch size when using mini-batch processing (NB this cannot exceed the number of time points)
  - The prior distribution of the parameter
  - The initial posterior distribution of the parameters
  - The use of the numerical (sample-based) calculation of the KL
@@ -63,9 +70,13 @@ The following variables were investigated
 We investigate convergence by calculating the mean of the cost function
 across all test instances by epoch. Note that this measure is not directly 
 comparable when different priors are used as the closeness of the 
-posterior to the prior is part of the cost calculation.
+posterior to the prior is part of the cost calculation. Convergence is
+plotted by runtime, rather than number of epochs for two reasons: Firstly
+since this is the measure of most interest to the end user, and also because
+in the case of mini-batch processing one epoch may represent multiple 
+iterations of the optimization loop.
 
-We also consider typical speed of convergence, defined for each voxel as 
+We also consider per-voxel speed of convergence, defined for each voxel as 
 the epoch at which it first came within 5% of its best cost. This 
 definition is only useful when convergence was eventually achieved.
 
@@ -81,23 +92,50 @@ in our case we do not have this luxury as we need to be able to converge
 the model fitting on any unseen data without user intervention.
 
 The convergence of the mean cost is shown below by learning rate and 
-number of time points.
+number of time points. In these tests mini-batch processing was not used,
+the analytic calculation of the KL divergence was used and the posterior 
+sample size was 200.
 
-.. image:: /images/conv_lr.png
-    :alt: Convergence by learning rate
+.. image:: /images/biexp/conv_lr_cov.png
+    :alt: Convergence by learning rate with covariance
+
+.. image:: /images/biexp/conv_lr_nocov.png
+    :alt: Convergence by learning rate without covariance
 
 Although the picture is rather messy some observations can be made:
 
- - High learning rates are unstable and do not achieve the best cost
+ - Excessively high learning rates are unstable and do not achieve the best cost
    across the data sets
- - Very low learning rates converge too slowly to be useful
+ - Very low learning rates (0.02 or lower) converge too slowly to be useful
  - Even some learning rates which appear to show good smooth convergence
-   do not achieve the minimum cost (e.g. LR=0.25, the greeen line on these
+   do not achieve the minimum cost (e.g. LR=0.25, the greeen line on some
    plots)
- - The best learning rates in this case are in the region 0.1 to 0.05 
-   which give reliable and generally fast convergence. We will use
-   a learning rate of 0.1 in subsequent tests where a single learning
-   rate is used.
+ - Convergence with covariance is much more challenging as would be expected since
+   the total number of fitted parameters rises from 10 to 20 per instance. In this
+   high-dimensional space finding the overall cost minimum is likely to be more
+   difficult. 
+ - A learning rate of 0.1 gives the fastest reliable convergence. We will use this
+   learning rate in subsequent tests where a single learning rate is required.
+ - Nevertheless initial convergnce can be faster at a higher learning rate (0.25 or 0.5)
+   suggesting use of 'quenching' where the learning rate is decreased during
+   the optimization.
+
+We can also examine the best cost achieved at various learning rates including variation
+in the posterior sample size:
+
+.. image:: /images/biexp/best_cost_lr_ss_cov.png
+    :alt: Best cost by learning rate with covariance
+
+.. image:: /images/biexp/best_cost_lr_ss_cov.png
+    :alt: Best cost by learning rate without covariance
+
+These plots reinforce that a learning rate of 0.1 seems optimal for attaining best
+cost across a range of tests although there may be slight benefit to a higher rate
+when including covariance.
+
+Increasing the posterior sample size leads to a gradual lowering of the best cost
+with little improvement beyond a size of 50. We will consider the sample size in 
+more detail in a later section.
 
 Effect of batch size and learning rate on best cost achieved
 ------------------------------------------------------------
@@ -114,23 +152,41 @@ converging onto local minima. Of course if the batch size is too small
 the optimization may become so noisy that convergence does not occur
 at all.
 
-This plot compares the final cost value achieved with variation in
-batch size and learning rate:
+.. image:: /images/biexp/conv_bs_cov.png
+    :alt: Convergence by batch size with covariance
 
-.. image:: /images/best_cost_lr.png
+.. image:: /images/biexp/conv_bs_nocov.png
+    :alt: Convergence by batch size without covariance
+
+These plots show that mini-batch processing does indeed accelerate
+convergence especially where the number of data points is high. Batch
+sizes of 10 and 20 produce consistently fast convergence compared to
+using the entire data set at each epoch.
+
+Since mini-batch processing increases gradient noise we might expect
+it to interact with the learning rate which we can investigate by
+looking at the best cost achieved by learning rate at different batch sizes:
+
+.. image:: /images/biexp/best_cost_lr_bs_cov.png
+    :alt: Best cost achieved by batch size and learning rate
+
+.. image:: /images/biexp/best_cost_lr_bs_nocov.png
     :alt: Best cost achieved by batch size and learning rate
 
 These results confirm the use of learning rates between 0.1 and 0.05
-as optimal across batch sizes. In general large batch sizes can tolerate
-higher learning rates whereas small batch sizes can be used with lower learning
-rates. This is in line with expectations since high learning rates and 
+as optimal across batch sizes. In general small batch sizes can be used 
+with lower learning rates. Large batch sizes can reach a lower cost 
+at higher learning rates, although sometimes they are not able to converge
+at all. This is in line with expectations since high learning rates and 
 low batch sizes both imply a 'noisier' optimization and both excessively
 high or low noise in the optimization can be problematic.
 
-Batch sizes smaller than the number of points in the data are only 
-beneficial for larger numbers of time points (50 or 100). For these
-data sets the optimal batch size was 10-15, which give the
-'flattest' curve, i.e. least affected by variation in the learning rate.
+It is noticeable that batch sizes smaller than the number of points in 
+the data only give faster convergence for larger numbers of time points 
+(50 or 100). However there is still an advantage to mini-batch processing
+in that the best cost curves are 'flatter', i.e. more tolerant of variation
+in the learning rate.
+
 Where batch size is fixed in subsequent tests we use a value of 10.
 
 Effect of posterior sample size
@@ -138,17 +194,39 @@ Effect of posterior sample size
 
 The sample size is used to esimate the integrals in the calculation of
 the cost function, so we would expect that a certain minimum size would
-be required for a good result. Here we vary the sample size independently
-of the batch size which is fixed at 10 - the learning rate is also fixed
-at 0.1 based on the results of the previous tests.
+be required for a good result. The smaller the sample, the more the
+resulting cost gradients are affected by the random sample selection
+which may lead to a noisier optimisation process that may not converge
+at all. On the other hand, larger sample sizes will take longer to 
+calculate the mean cost giving potentially slower real-time convergence.
 
-.. image:: /images/conv_ss.png
+Here we vary the sample size with a fixed learning rate of 0.1 and initially
+without mini-batch processing:
+
+.. image:: /images/biexp/conv_ss_cov.png
     :alt: Convergence of free energy by sample size
 
-The convergence of the free energy shows that convergence occurs in fewer
-epochs for large sampling sizes and that there is little benefit to
-samples sizes > 100. However this is not necessarily significant in terms
-of performance as each epoch takes more time when the sample size is larger.
+.. image:: /images/biexp/conv_ss_nocov.png
+    :alt: Convergence of free energy by sample size
+
+This illustrates that very small sample sizes do indeed result in a noisy
+potentially non-convergent optimization, and also that larger sample sizes
+can produce overall slower convergence. The picture is mixed, however the
+optimal sample size is around 50 when inferring covariance but only 20
+without covariance.
+
+We can also look at the equivalent convergence when using mini-batch processing
+with a batch size of 10:
+
+.. image:: /images/biexp/conv_ss_bs_10_cov.png
+    :alt: Convergence of free energy by sample size
+
+.. image:: /images/biexp/conv_ss_bs_10_nocov.png
+    :alt: Convergence of free energy by sample size
+
+The results are essentially the same however the optimization becomes extremely
+unstable at small sample sizes when combined with mini-batch processing.
+
 Note also that it is possible that a lower sample size may constrain the
 free energy systematically (analogously to the way in which numerical
 integration techniques may systematically under or over estimate depending
@@ -156,26 +234,39 @@ on whether the function is convex). So the higher free energy of smaller
 sample sizes does not necessarily mean that the posterior is actually
 further from the best variational solution.
 
-With this in mind it is useful to look at convergence in parameter values:
+With this in mind it is useful to look at convergence in parameter values
+(using mini-batch processing as above):
 
-.. image:: /images/conv_ss_amp1.png
+.. image:: /images/biexp/conv_ss_amp1_cov.png
     :alt: Convergence of amp1 parameter by sample size
 
-.. image:: /images/conv_ss_amp2.png
+.. image:: /images/biexp/conv_ss_amp2_cov.png
     :alt: Convergence of amp2 parameter by sample size
 
-.. image:: /images/conv_ss_r1.png
+.. image:: /images/biexp/conv_ss_r1_cov.png
     :alt: Convergence of r1 parameter by sample size
 
-.. image:: /images/conv_ss_r2.png
+.. image:: /images/biexp/conv_ss_r2_cov.png
+    :alt: Convergence of r2 parameter by sample size
+
+.. image:: /images/biexp/conv_ss_amp1_nocov.png
+    :alt: Convergence of amp1 parameter by sample size
+
+.. image:: /images/biexp/conv_ss_amp2_nocov.png
+    :alt: Convergence of amp2 parameter by sample size
+
+.. image:: /images/biexp/conv_ss_r1_nocov.png
+    :alt: Convergence of r1 parameter by sample size
+
+.. image:: /images/biexp/conv_ss_r2_nocov.png
     :alt: Convergence of r2 parameter by sample size
 
 Here we can see that firstly, with fewer data points the optimization tends
 to favour a single-exponential solution and does not recover the biexponential
-property for many voxels until we have NT=50.
+property for most voxels until we have at NT=50.
 
-With regard to sample size, there seems little benefit in sample sizes above
-30.
+In general there is little benefit to sample sizes above 50, and 20 gives
+very similar results for NT=50 and NT=100.
 
 Effect of prior and initial posterior
 -------------------------------------
@@ -230,7 +321,7 @@ posterior mean for the amplitude parameters to be initialised from the data.
 |                |initialised from the data                                             |
 +----------------+----------------------------------------------------------------------+
 
-.. image:: /images/prior_post.png
+.. image:: /images/biexp/prior_post.png
     :alt: Best cost achieved by prior and posterior combinations
 
 These results show that in terms of absolute convergence there is no significant 
@@ -268,7 +359,7 @@ It is reassuring that the cost can converge under a wide variety of prior and po
 assumptions, however it is also useful to consider the effect of these variables
 on speed of convergence. The results below illustrate this:
 
-.. image:: /images/prior_post_conv_speed.png
+.. image:: /images/biexp/prior_post_conv_speed.png
     :alt: Best cost achieved by prior and posterior combinations
 
 This plot shows the epoch at which each voxel converged (to with 5% of its final values).
@@ -283,3 +374,72 @@ this problem is much less obvious when the priors are informative as in this cas
 prior values. This quickly guides the optimisation to the correct solution. Initialisation of the
 posterior from the data (where there is a reasonable method for doing this) is
 therefore recommended to improve convergence speed.
+
+Numerical vs analytic evaluation of the KL divergence
+-----------------------------------------------------
+
+In the results above we have used the analytic result for the KL divergence of two
+multivariate Gaussian distributions. In general where the posterior is not 
+constrained to this distribution we need to use a numerical evaluation which involves
+the posterior sample. So it is useful to assess the effect of forcing the
+numerical method in this case, particularly in combination with variation in
+the sample size.
+
+.. image:: /images/biexp/best_cost_ss_num_cov.png
+    :alt: Best cost achieved by analytic and numerical solution
+
+.. image:: /images/biexp/best_cost_ss_num_nocov.png
+    :alt: Best cost achieved by analytic and numerical solution
+
+The absolute values of the free energy cannot be compared directly since 
+some constant terms in the analytic solution are dropped from the calculation.
+The convergence properties with sample size, however, are closely similar even though
+part of the cost is independent of sample size in the analytic case.
+
+We can also compare parameter convergence with sample size:
+
+.. image:: /images/biexp/conv_ss_amp1_analytic_nocov.png
+    :alt: Convergence of amp1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_amp1_num_nocov.png
+    :alt: Convergence of amp1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_amp1_analytic_cov.png
+    :alt: Convergence of amp1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_amp1_num_cov.png
+    :alt: Convergence of amp1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_r1_analytic_nocov.png
+    :alt: Convergence of r1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_r1_num_nocov.png
+    :alt: Convergence of r1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_r1_analytic_cov.png
+    :alt: Convergence of r1 by analytic and numerical solution
+
+.. image:: /images/biexp/conv_ss_r1_num_cov.png
+    :alt: Convergence of r1 by analytic and numerical solution
+
+In most cases the numerical and analytic solutions seem very similar,
+however in the case of the rate parameter we do not appear to get
+a converged result at NT=50 or 100 until we have a sample size of
+100 when inferring covariance. *This requires additional investigation 
+since it is out of step with the remainder of the results.*
+
+Inference of covariance
+-----------------------
+
+The effect of inferring covariance or not has been shown throughout
+these tests. In general the effect is that convergence is more
+challenging with covariance as would be expected with the increased
+parameter space, and instabilities caused by small batch or sample
+sizes, or large learning rates, are exacerbated by the inclusion
+of covariance. It's worth mentioning that the symmetry of the 
+biexponential model would expect to generate significant parameter
+covariances.
+
+A strategy of initially optimizing without covariance, and then 
+restarting the optimization with the covariance parameters included
+is an obvious way to address this.
