@@ -105,10 +105,11 @@ sample size was 200.
 Although the picture is rather messy some observations can be made:
 
  - Excessively high learning rates are unstable and do not achieve the best cost
-   across the data sets
+   across the data sets (a learning rate of 1.0 was also tested but not plotted
+   as the instability made the plots difficult to read).
  - Very low learning rates (0.02 or lower) converge too slowly to be useful
  - Even some learning rates which appear to show good smooth convergence
-   do not achieve the minimum cost (e.g. LR=0.25, the greeen line on some
+   do not achieve the minimum cost (e.g. LR=0.25, the amber line on some
    plots)
  - Convergence with covariance is much more challenging as would be expected since
    the total number of fitted parameters rises from 10 to 20 per instance. In this
@@ -134,8 +135,9 @@ cost across a range of tests although there may be slight benefit to a higher ra
 when including covariance.
 
 Increasing the posterior sample size leads to a gradual lowering of the best cost
-with little improvement beyond a size of 50. We will consider the sample size in 
-more detail in a later section.
+with little improvement beyond a size of 50. Small sample sizes combined with high
+learning rates are problematic - at low learning rates the sample size matters less.
+We will consider the sample size in more detail in a later section.
 
 Effect of batch size and learning rate on best cost achieved
 ------------------------------------------------------------
