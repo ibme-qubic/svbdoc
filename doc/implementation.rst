@@ -65,7 +65,7 @@ clarity:
    integrals over the posterior in the stochastic method. 
  - ``P`` is the number of
    parameters in the generative model, including any parameters required to 
-   model (including any parameters needed to model the noise component).
+   model the noise component.
 
 .. note::
     For clarity with our intended application to modelling timeseries 
@@ -215,7 +215,7 @@ mean log likelihood tensor with dimensions ``[V]``.
         """
 
 .. note::
-    Currently we are assuming a single noise parameter. This will be relaxes in future
+    Currently we are assuming a single noise parameter. This will be relaxed in future
     and the input noise parameter tensor will have dimension ``[V, S, Pn]`` where ``Pn`` is
     the number of noise parameters
     
@@ -353,6 +353,35 @@ It remains to be seen if any of these strategies are useful in our application -
 again they are typically the product of machine learning applications which, 
 although they resemble our problem in some ways, differ greatly in others so
 not all recommended strategies may be useful. 
+
+Numerical instability
+~~~~~~~~~~~~~~~~~~~~~
+
+Gradient-based optimization can be subject to numerical instability where the
+parameters at some point in the optimization acquire values which push some
+aspect of the computation out of range - for example a value which is too large
+to take the exponential of. When this occurs the overall cost will be 
+returned as an invalid value - either infinity or ``NaN`` ('not a number'). 
+Unfortunately this makes it impossible for the optimizer to choose its next
+move sensibly as gradients will typically have invalid values also. 
+
+Currently we trap numerical errors and respond to them by first reverting 
+the parameter values to the 'previous best' state (i.e. the state at which 
+we had our best cost). If learning rate quenching is in use we will reduce the
+learning rate accordingly and continue from there - a common cause of numerical
+instability is an excessively high learning rate. If learning rate quenching 
+is not in use then it is not altered and we simply continue from the previous
+state in the hope that random elements in the optimization (e.g. the sampling
+method for the posterior) will avoid the instability a second time. In practice
+once the optimization starts to become unstable it tends to return invalid 
+values frequently unless the learning rate is reduced so this is a good 
+case for using quenching.
+
+The detailed cause of these instabilities is still under investigation - since
+it only requires one parameter value for a single voxel to trigger it is not
+always easy to pin down the cause. However it seems likely that the sampling
+of the posterior will occasionally return extreme values which perhaps drive 
+the cost function out of range.
 
 Voxelwise convergence
 ~~~~~~~~~~~~~~~~~~~~~
