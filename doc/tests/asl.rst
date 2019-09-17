@@ -66,54 +66,114 @@ time delay of 0.0452s per slice. 8 repeats of the full set of PLDs was obtained.
 
 The test data was fitted in two ways. One method was to average over the repeats
 and fit the model to the repeat-free data. The other is to fit the model to the whole
-data including repeats. Naturally this involves a larger data size and hence a mini-batch
-approach to the optimization.
-
-Mean data tests
-~~~~~~~~~~~~~~~
-
-For these tests we have only 6 time points and therefore we do not use a mini-batch
-approach, instead using a fixed batch size of 6 (all data points).
+data including repeats. Naturally this involves a larger data size and hence the possibility
+of a mini-batch approach to the optimization.
 
 Convergence by learning rate
-''''''''''''''''''''''''''''
+----------------------------
 
-The convergence of mean cost by learning rate is shown below:
+The convergence of mean cost by learning rate is shown below with and without
+covariance:
 
-.. image:: /images/conv_lr_asl.png
-    :alt: Convergence by learning rate
+.. image:: /images/asl/conv_lr_nocov.png
+    :alt: Convergence by learning rate (without covariance)
+
+.. image:: /images/asl/conv_lr_cov.png
+    :alt: Convergence by learning rate (with covariance)
 
 The pattern is closely similar to that obtained using a biexpoential model
-although the convergence here is generally 'cleaner'. Learning rates between
-0.05 and 0.1 attain the lowest cost within the given number of epochs, with 0.1 
-converging faster. Higher learning
-rates are less stable and do not appear to be likely to converge, while lower
-learning rates converge slowly.
+although the convergence here is generally 'cleaner'. Up to 0.25, higher learning
+rates minimise the cost faster, however a learning rate of 0.25 becomes unstable
+with covariance as the minimum is approached. This suggests the use of a 'quenching'
+method (investigated later). Note that these plots show convergence by runtime not
+epochs as this is more relevant to an end user. These plots used a posterior
+sample size of 20 and no mini-batch processing.
 
-The best cost achieved in 500 epochs is shown below, reinforcing the optimum
-learning rate range 0.1 - 0.05
+Lower learning rates attain eventually attain a better minimum cost, with the 
+optimimum learning rate of 0.1 - 0.05 over most sample sizes, although the 
+repeated data tolerates higher learning rates at large sample sizes.
 
-.. image:: /images/best_cost_lr_asl.png
-    :alt: Best cost achieved in 500 epochs by learning rate
+.. image:: /images/asl/best_cost_lr_ss_nocov.png
+    :alt: Best cost achieved in 500 epochs by learning rate (without covariance)
 
-Full data tests
-~~~~~~~~~~~~~~~
+.. image:: /images/asl/best_cost_lr_ss_cov.png
+    :alt: Best cost achieved in 500 epochs by learning rate (with covariance)
 
-For these tests we have 8 repeats of the 6 PLDs giving 48 data points. This
-raises the possibility of a mini-batch approach. Intuitively the obvious
-choice of batch size is 6, arranged so that each optimization iteration
-considers one repeat of all 6 PLDs. However we experiment with varying
-the batch size to see if there is any actual advantage in this structure.
+Convergence by batch size
+-------------------------
 
-.. image:: /images/conv_lr_asl_rpts.png
-    :alt: Convergence by learning rate
+These tests used a fixed learning rate of 0.1 and sample size of 20. These
+tests are most relevant to the repeated data set since it has a large enough
+number of volumes to make batch processing worthwhile.
 
-.. image:: /images/best_cost_lr_asl_rpts.png
-    :alt: Best cost achieved in 500 epochs by learning rate
+.. image:: /images/asl/conv_bs_nocov.png
+    :alt: Convergence by batch size (without covariance)
 
-The patterns with convergence and batch size are very similar to those
-obtained from the biexponential model. In particular there is no visible
-effect of aligning the batch size with the ASL repeats. Again we find
-a general optimum learning rate of 0.1 - 0.05 associated with a batch 
-size around 10, although it is noticable that the best cost achieved
-at lower learning rates is a bit better with smaller batch sizes.
+.. image:: /images/asl/conv_bs_cov.png
+    :alt: Convergence by batch size (with covariance)
+
+Mini batch processing is associated with faster convergence with the best
+convergence achieved with a batch size of 9 which compares well with the 
+optimal batch size of 10 estimated in the biexponential tests. Interestingly
+processing the mean data with a batch size of 5 rather than using the full
+set of 6 repeats also gives faster convergence. However with covariance
+enabled we get instability with smaller batch sizes as convergence approaches
+the minimum.
+
+.. image:: /images/asl/best_cost_lr_bs_nocov.png
+    :alt: Best cost achieved in 500 epochs by batch size (without covariance)
+
+.. image:: /images/asl/best_cost_lr_bs_cov.png
+    :alt: Best cost achieved in 500 epochs by batch size (with covariance)
+
+The best cost achieved was largely independent of the batch size for the 
+optimal learning rates between 0.1 and 0.05. However small batch sizes 
+converge better at lower learning rates than large batch sizes and worse
+at higher learning rates, consistent with the results of the biexponential tests.
+
+Convergence by posterior sample size
+------------------------------------
+
+These tests used a fixed learning rate of 0.1 and no mini-batch processing.
+
+.. image:: /images/asl/conv_ss_nocov.png
+    :alt: Convergence by sample size (without covariance)
+
+.. image:: /images/asl/conv_ss_cov.png
+    :alt: Convergence by sample size (with covariance)
+
+Smaller sample sizes converge faster (as would be expected since the 
+computational demands are essentially proportional to the sample size)
+however a larger sample is needed to get the best cost (this is less
+evident when not inferring covariance). Note however that the cost
+with sample size is not necessarily strictly variational so we cannot
+immediately conclude that a lower cost is better.
+
+Similar results are obtained when we use a mini-batch approach for
+the repeated data, with a batch size of 6, however we again see 
+instability in the cost as convergence is approached when inferring
+covariance.
+
+.. image:: /images/asl/conv_ss_bs_6_nocov.png
+    :alt: Convergence by sample size with batch size of 6 (without covariance)
+
+.. image:: /images/asl/conv_ss_bs_6_cov.png
+    :alt: Convergence by sample size with batch size of 6 (with covariance)
+
+Since we cannot directly rely on the variational principle here we can 
+also look at variation of parameter values with sample size. These plots
+are remarkably dull and suggest that the lower free energy achieved at 
+higher sample sizes does not necessarily translate into significant 
+differences in the posterior parameter distributions.
+ 
+.. image:: /images/asl/conv_ss_ftiss_nocov.png
+    :alt: Convergence of ftiss parameter by sample size (without covariance)
+
+.. image:: /images/asl/conv_ss_ftiss_cov.png
+    :alt: Convergence by ftiss parameter sample size (with covariance)
+
+.. image:: /images/asl/conv_ss_delttiss_nocov.png
+    :alt: Convergence of delttiss parameter by sample size (without covariance)
+
+.. image:: /images/asl/conv_ss_delttiss_cov.png
+    :alt: Convergence by delttiss parameter sample size (with covariance)
