@@ -245,6 +245,26 @@ for NT=100.
     we have normalized the data here by identifying `r1` and `amp1` with
     the exponential having the lower decay rate
 
+Comparison with conventional Variational Bayes
+----------------------------------------------
+
+We can compare the parameter output with the result of running a conventional
+Variational Bayes fit to the same data. The priors and initial posteriors were
+also the same for these runs:
+
+.. image:: /images/biexp/params_vb_cov.png
+    :alt: Parameter recovery (VB with covariance)
+
+The distributions are similar for the higher numbers of timepoints where the
+bi-exponential solution is found by both methods. Both methods also struggle
+to recover the bi-exponential property with 20 or fewer timepoints, although
+the errors are quite different in each case.
+
+Note that the variational Bayes algorithm used (based on the Fabber_ tool)
+always infers covariance between parameters.
+
+.. _Fabber: https://fabber_core.readthedocs.io/
+
 Effect of prior and initial posterior
 -------------------------------------
 
