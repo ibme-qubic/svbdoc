@@ -173,3 +173,14 @@ Parameter recovery
 
 .. image:: /images/asl/conv_ss_delttiss_cov.png
     :alt: Convergence by delttiss parameter sample size (with covariance)
+
+Comparison with conventional Variational Bayes
+----------------------------------------------
+
+The following images show the perfusion maps for the mean (single repeat) data
+obtained from Variational Bayes (using the Fabber_ toolkit) and the SVB approach:
+
+.. image:: /images/asl/perfusion_compare.png
+    :alt: Perfusion map from SVB and VB using mean data
+
+.. _Fabber: https://fabber_core.readthedocs.io/
