@@ -183,4 +183,13 @@ obtained from Variational Bayes (using the Fabber_ toolkit) and the SVB approach
 .. image:: /images/asl/perfusion_compare.png
     :alt: Perfusion map from SVB and VB using mean data
 
+For the SVB image, a learning rate of 0.1 was used, no mini-batch processing and
+sample sizes of 5 (for multi-repeat data) and 20 (for single repeat data).
+
+A sample timeseries plot showing the SVB and VB solutions overlaid on the source
+data and mean source data is shown below:
+
+.. image:: /images/asl/timeseries.png
+    :alt: Timeseries from SVB and VB
+
 .. _Fabber: https://fabber_core.readthedocs.io/
