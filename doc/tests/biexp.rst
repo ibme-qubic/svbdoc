@@ -217,13 +217,25 @@ Parameter recovery
 So far we have just investigated convergence through the cost function,
 however ultimately it is the parameter values that we are interested in.
 These plots show the voxelwise distribution of the parameters with and
-without covariance by number of timepoints.
+without covariance by number of timepoints. The 'VB' plots show the
+equivalent distributions using conventional Variational Bayes algorithm
+(based on the Fabber_ tool - note that this algorithm always infers 
+covariance between parameters):
 
-.. image:: /images/biexp/params_cov.png
-    :alt: Parameter recovery (with covariance)
+.. image:: /images/biexp/amp1_method.png
+    :alt: Parameter recovery for amp1
 
-.. image:: /images/biexp/params_nocov.png
-    :alt: Parameter recovery (no covariance)
+.. image:: /images/biexp/amp2_method.png
+    :alt: Parameter recovery for amp2
+
+.. image:: /images/biexp/r1_method.png
+    :alt: Parameter recovery for r1
+
+.. image:: /images/biexp/r2_method.png
+    :alt: Parameter recovery for r2
+
+.. image:: /images/biexp/noise_method.png
+    :alt: Parameter recovery for noise
 
 Parameter recovery with fewer data points tends to lead to a solution where
 the first exponential has higher amplitude and decay rate, while the second
@@ -239,6 +251,14 @@ For larger numbers of time points parameter recovery is good. Outliers are
 consistently within reasonable bounds of the true solution, particularly
 for NT=100.
 
+In comparison with conventional variational Bayes, the distributions are 
+similar for the higher numbers of timepoints where the
+bi-exponential solution is found by both methods. Both methods also struggle
+to recover the bi-exponential property with 20 or fewer timepoints, although
+the direction of the errors is different in each case.
+
+.. _Fabber: https://fabber_core.readthedocs.io/
+
 .. note::
     Since the biexponential model has two identical solutions obtained by
     exchanging the amplitude and rate parameters for the exponentials,
@@ -247,23 +267,6 @@ for NT=100.
 
 Comparison with conventional Variational Bayes
 ----------------------------------------------
-
-We can compare the parameter output with the result of running a conventional
-Variational Bayes fit to the same data. The priors and initial posteriors were
-also the same for these runs:
-
-.. image:: /images/biexp/params_vb_cov.png
-    :alt: Parameter recovery (VB with covariance)
-
-The distributions are similar for the higher numbers of timepoints where the
-bi-exponential solution is found by both methods. Both methods also struggle
-to recover the bi-exponential property with 20 or fewer timepoints, although
-the errors are quite different in each case.
-
-Note that the variational Bayes algorithm used (based on the Fabber_ tool)
-always infers covariance between parameters.
-
-.. _Fabber: https://fabber_core.readthedocs.io/
 
 Effect of prior and initial posterior
 -------------------------------------
