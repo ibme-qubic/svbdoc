@@ -345,7 +345,11 @@ more reliably since it is less dependent on the particular values that happened
 to be included in the sample.
 
 We conclude that the initial posterior must be informative even if it is a long way 
-from the true solution.
+from the true solution. The equivalent plot excluding the non-informative posterior 
+distributions is as follows:
+
+.. image:: /images/biexp/prior_post_infonly.png
+    :alt: Best cost achieved by prior and posterior combinations with only informative posterior distributions
 
 The ``_analytic`` and ``_num`` plots are identical apart from using the analytic
 or the numerical solution to the KL divergence between two MVNs. The similarity between these results
