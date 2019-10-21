@@ -162,29 +162,28 @@ whereas without covariance all batch sizes of 18 or smaller are comparable.
 Parameter recovery
 ------------------
 
-.. image:: /images/asl/conv_ss_ftiss_nocov.png
-    :alt: Convergence of ftiss parameter by sample size (without covariance)
+Since we have no ground truth in this case, we can only compare parameter
+recovery with existing methods, in our case analytic Variational Bayes, using
+the Fabber_ toolkit. For the SVB results, a learning rate of 0.1 was used, 
+no mini-batch processing and sample sizes of 5 (for multi-repeat data) and 
+20 (for single repeat data).
 
-.. image:: /images/asl/conv_ss_ftiss_cov.png
-    :alt: Convergence by ftiss parameter sample size (with covariance)
+.. image:: /images/asl/ftiss_method.png
+    :alt: Ftiss parameter in SVB and Fabber
 
-.. image:: /images/asl/conv_ss_delttiss_nocov.png
-    :alt: Convergence of delttiss parameter by sample size (without covariance)
+.. image:: /images/asl/delttiss_method.png
+    :alt: delttiss parameter in SVB and Fabber
 
-.. image:: /images/asl/conv_ss_delttiss_cov.png
-    :alt: Convergence by delttiss parameter sample size (with covariance)
+With covariance inferred, results are almost indistinguishable
+(note that Fabber always infers covariance):
 
-Comparison with conventional Variational Bayes
-----------------------------------------------
-
-The following images show the perfusion maps for the mean (single repeat) data
-obtained from Variational Bayes (using the Fabber_ toolkit) and the SVB approach:
+The following images show the perfusion maps for the mean (single repeat) and
+multi-repeat data data obtained from analytic Variational Bayes and the SVB approach:
 
 .. image:: /images/asl/perfusion_compare.png
     :alt: Perfusion map from SVB and VB using mean data
 
-For the SVB image, a learning rate of 0.1 was used, no mini-batch processing and
-sample sizes of 5 (for multi-repeat data) and 20 (for single repeat data).
+While differences can be found, the overall picture is very similar.
 
 A sample timeseries plot showing the SVB and VB solutions overlaid on the source
 data and mean source data is shown below:
