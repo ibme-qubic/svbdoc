@@ -174,3 +174,103 @@ Gaussian distribution, the actual forms of the distributions are not
 constrained by the method (apart from the limitation of not always being able to use
 the reparameterization trick).
 
+Spatial regularization priors
+-----------------------------
+
+When inferring model parameters from noisy data, it is to be expected that the output
+parameter maps are themselves rather noisy. However in many cases we know that 
+parameter values are unlikely to vary dramatically between voxels whose spatial 
+positions are very similar. For this reason it is common to perform some kind of
+spatial smoothing, either on the initial input data, or on the output parameter maps.
+Usually this consists of *ad-hoc* Gaussian smoothing using a kernel determined from
+inspection of the data and/or output.
+
+The Bayesian framework offers us an alternative means of achieving the same effect in
+a more principled way which responds directly to the information present in the data.
+In essence we embody our belief in a degree of spatial uniformity into the *prior*,
+by choosing a form for the prior which allows the value for a parameter at one
+voxel to influence those at its spatial neighbours. An example is to model the prior
+as a multi-variate normal distribution over the *voxels*:
+
+.. math::
+    P(\Theta_k) = MVN(0, (\phi_k D)^{-1})
+
+.. note::
+    It is important to remember that this is an MVN over the *voxels* in the data for
+    a single parameter, not a distribution over the different parameters in the model.
+
+Here :math:`\Theta_k` 
+is a vector of all the values for parameter :math:`k` at the various voxels, 
+:math:`\phi_k` is a global smoothing parameter for model parameter :math:`k` and
+:math:`D` is a covariance matrix which reflects the influence of voxels on
+their spatial neighbours, 
+
+What this means is that the prior probability of a parameter map is a function of the
+entire set of values at all the voxels, rather than simply a set of independent 
+probabilities of the values at individual voxels.
+
+:math:`\phi_k` is allowed to vary during the optimization. A high value of :math:`\phi_k`
+corresponds high prior spatial smoothness while a low value of :math:`\phi_k` reduces the
+influence of a voxel on its neighbours and corresponds to a less smooth output.
+
+The log PDF (latent cost, in the SVB formalism) can be derived as:
+
+.. math::
+    \log{P(\Theta_k)} = \sum_i \frac{1}{2} \log{\phi_k} - \frac{\phi_k}{2} \Theta_{ki} (D\Theta_k)_i
+
+Where the sum is over the voxels :math:`i`. This decomposes into two terms, one favouring
+high :math:`\phi_k` (increased smoothing), and the other favouring low :math:`\phi_k`
+(less smoothing). The latter term is connected to the actual spatial variability of the
+parameter. Hence the prior adapts to the variation in the data to infer an optimal 
+value of :math:`\phi_k` and a parameter map which is smoothed accordingly.
+
+Since :math:`\phi_k` is now being inferred itself, it also requires a prior. Following
+Penny, we use a relatively non-informative Gamma distribution:
+
+.. math::
+    P(\phi_k) = Ga(\phi_k; 10, 1)
+
+:math:`D` is an :math`N \times N` matrix where :math:`N` is the number of voxels. It can be chosen 
+in various ways. Currently we use a choice of :math:`D`
+derived from a Markov Random Field model, in which the diagonal elements of :math:`D` are
+the number of nearest spatial neighbours for the corresponding voxel while the off-diagonal
+elements are -1 for voxels which are nearest neighbours. It can be shown that this is 
+equivalent to a prior PDF of the form:
+
+.. math::
+    P(\Theta_k) \propto \phi_k^{\frac{N}{2}} \exp(-\frac{\phi_k}{4}\sum_i \sum_{j \in N(i)} (\Theta_{ki} - \Theta_{kj})^2)
+
+Where :math:`N(i)` is the set of neighbouring voxels to voxel :math:`i`. Hence this 
+prior penalizes differences between neighbouring voxels.
+
+Alternative choices of :math:`D` are possible, for example Penny et al (2004) uses a
+Laplacian operator to derive a :math:`D` which includes influence from second nearest
+neighbours in addition.
+
+For practical calculation, it is important that the matrix :math:`D` is sparse - with 
+typically :math:`10^5` to :math:`10^6` voxels it is difficult to store the full matrix 
+within memory. Calculation of quantities involving :math:`D` are typically done either
+by looping over voxelwise nearest neighbour lists, or by representing :math:`D` within
+a dedicated sparse matrix library.
+
+Implementation of spatial priors in analytic Variational Bayes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To implement this prior in the analytic VB framework we must derive a new set of 
+update equations for the spatial smoothing parameter :math:`\phi_k`, which 
+depends on the current posterior parameter estimates. Typically we update the
+posterior parameters for all voxels with a fixed :math:`\phi_k` and then update
+:math:`\phi_k` itself before repeating the voxelwise update loop.
+
+Implementation of spatial priors in stochastic Variational Bayes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is more straightforward than the analytic case, because we simply need to 
+use the expression given above for the log PDF of the spatial prior within the
+calculation of the latent cost. :math:`\phi_k` is included as a parameter of 
+optimization and is automatically updated to minimise the total cost.
+
+Either of the expressions for the log PDF given above can be used, however in 
+practice the version expressed in terms of (sparse) matrix multiplication is
+easier to implement in an efficient way within the TensorFlow library. Both, 
+however, produce the same results when tested.
